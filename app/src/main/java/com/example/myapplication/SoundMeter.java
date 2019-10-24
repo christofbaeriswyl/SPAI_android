@@ -3,7 +3,7 @@ package com.example.myapplication;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
-
+/*
 public class SoundMeter {
 
     private AudioRecord ar = null;
@@ -35,4 +35,10 @@ public class SoundMeter {
         return max;
     }
 
-}
+    public void getData(short[] buffer) {
+        ar.read(buffer, 0, minSize);
+    }
+
+}*/
+
+

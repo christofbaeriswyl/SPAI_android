@@ -1,4 +1,7 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Speech System</string>
+    <string name="app_title">SPAI - Speech Communication System</string>
+    <string name="main_play">Click here to start recording</string>
+    <string name="main_pause">Click here to pause recording</string>
     <string name="action_settings">Settings</string>
 </resources>
