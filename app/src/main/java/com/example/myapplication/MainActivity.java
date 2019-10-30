@@ -67,6 +67,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        imageButton2.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                soundMeter.stop();
+            }
+        });
+
     }
 
     View.OnClickListener buttonConnectOnClickListener =
@@ -137,8 +143,8 @@ public class MainActivity extends AppCompatActivity {
         private int minSize;
 
         public void start() {
-            minSize= AudioRecord.getMinBufferSize(8000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            ar = new AudioRecord(MediaRecorder.AudioSource.MIC, 8000,AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,minSize);
+            minSize= AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+            ar = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100,AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,minSize);
             ar.startRecording();
         }
 
