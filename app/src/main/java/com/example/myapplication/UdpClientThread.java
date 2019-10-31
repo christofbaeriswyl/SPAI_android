@@ -1,4 +1,4 @@
-package com.example.myapplication;
+/*package com.example.myapplication;
 
 import android.os.Message;
 
@@ -46,50 +46,46 @@ public class UdpClientThread extends Thread{
     @Override
     public void run() {
         sendState("connecting...");
-
         running = true;
-
         try {
-            socket = new DatagramSocket();
-            address = InetAddress.getByName(dstAddress);
-
-            // send request
             while(true) {
-                short[] buffer_short = new short[256];
+            address = InetAddress.getByName(dstAddress);
+            socket = new DatagramSocket();
+                int size = soundmeter.minSize;
+                short[] buffer_short = new short[size];
                 soundmeter.getData(buffer_short);
-                byte[] buffer = new byte[256 * 2];
-
+                byte[] buffer = new byte[size * 2];
                 int short_index, byte_index;
-                int iterations = 256;
+                int iterations = size * 2;
                 short_index = byte_index = 0;
 
-                for (/*NOP*/; short_index != iterations; /*NOP*/) {
+                for ( ; short_index != iterations; ) {
                     buffer[byte_index] = (byte) (buffer_short[short_index] & 0x00FF);
                     buffer[byte_index + 1] = (byte) ((buffer_short[short_index] & 0xFF00) >> 8);
 
                     ++short_index;
                     byte_index += 2;
                 }
-
-                DatagramPacket packet =
-                        new DatagramPacket(buffer, buffer.length, address, dstPort);
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, dstPort);
                 socket.send(packet);
-
-                sendState("connected");
+                sendState("sent");
             }
-
         } catch (SocketException e) {
             e.printStackTrace();
+            sendState("FAIL,SocketException");
         } catch (UnknownHostException e) {
             e.printStackTrace();
+            sendState("FAIL,UnknownHost");
         } catch (IOException e) {
             e.printStackTrace();
+            sendState("FAIL,IO");
         } finally {
             if(socket != null){
+                sendState("Socket Closed");
                 socket.close();
                 handler.sendEmptyMessage(MainActivity.UdpClientHandler.UPDATE_END);
             }
         }
 
     }
-}
+}*/
