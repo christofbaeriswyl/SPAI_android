@@ -17,15 +17,18 @@ package com.example.myapplication;
         import android.widget.Button;
         import android.widget.ImageButton;
         import android.widget.EditText;
+        import android.widget.TextView;
 
 public class MainActivity extends Activity {
     private Button startButton,stopButton;
     private ImageButton imageStart, imageStop;
     EditText editTextAddress, editTextPort;
+    TextView textAmplitude, textSamplingRate, textBufferSize;
 
     public byte[] buffer;
     public static DatagramSocket socket;
     private int port=12345;
+    private int AmplitudeCounter =0;
 
     AudioRecord recorder;
 
@@ -45,9 +48,16 @@ public class MainActivity extends Activity {
         imageStop = findViewById(R.id.imageButton2);
         editTextAddress = (EditText) findViewById(R.id.address);
         editTextPort = (EditText) findViewById(R.id.port);
+        textAmplitude = findViewById(R.id.textAmplitude);
+        textSamplingRate = findViewById(R.id.textSamplingRate);
+        textBufferSize = findViewById(R.id.textBufferSize);
 
         imageStart.setOnClickListener (imageStartListener);
         imageStop.setOnClickListener (imageStopListener);
+
+        textBufferSize.setText("Buffer size [byte]: " + Integer.toString(minBufSize));
+        textSamplingRate.setText("Sampling Rate [Hz]: " + Integer.toString(sampleRate));
+
 
     }
 
@@ -73,7 +83,7 @@ public class MainActivity extends Activity {
                 try {
                     DatagramSocket socket = new DatagramSocket();
                     Log.d("VS", "Socket Created");
-                    byte[] buffer = new byte[minBufSize];
+                    final byte[] buffer = new byte[minBufSize];
                     Log.d("VS","Buffer created of size " + minBufSize);
                     DatagramPacket packet;
                     //final InetAddress destination = InetAddress.getByName("192.168.43.83");
@@ -91,7 +101,18 @@ public class MainActivity extends Activity {
                         //putting buffer in the packet
                         packet = new DatagramPacket (buffer,buffer.length,destination,port);
                         socket.send(packet);
-                        System.out.println("MinBufferSize: " +minBufSize);
+
+                        AmplitudeCounter++;
+                        if (AmplitudeCounter == 10) {
+                            AmplitudeCounter = 0;
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    textAmplitude.setText("Amplitude: " + Double.toString(getAmplitude(buffer)));
+                                }
+                            });
+                        }
+                        //System.out.println("MinBufferSize: " +minBufSize);
                     }
                 } catch(UnknownHostException e) {
                     Log.e("VS", "UnknownHostException");
@@ -103,17 +124,16 @@ public class MainActivity extends Activity {
         });
         streamThread.start();
     }
-    /*public double getAmplitude() {
-        short[] buffer = new short[minSize];
-        ar.read(buffer, 0, minSize);
+    private double getAmplitude(byte[] buffer) {
         int max = 0;
-        for (short s : buffer)
+        for (int i = 0; i < buffer.length/2 - 1; i++)
         {
-            if (Math.abs(s) > max)
+            short val=(short)(((buffer[2*i + 1] & 0xFF) << 8) | (buffer[2*i] & 0xFF));
+            if (Math.abs(val) > max)
             {
-                max = Math.abs(s);
+                max = Math.abs(val);
             }
         }
         return max;
-    }*/
+    }
 }
