@@ -32,7 +32,8 @@ public class MainActivity extends Activity {
 
     AudioRecord recorder;
 
-    private int sampleRate = 16000 ; // 44100 for music
+    private int sampleRate = 44100 ; // 44100 for music
+    //private int sampleRate = 48000 ; // 44100 for music
     private int channelConfig = AudioFormat.CHANNEL_CONFIGURATION_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
