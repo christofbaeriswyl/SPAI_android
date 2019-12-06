@@ -32,10 +32,11 @@ public class MainActivity extends Activity {
 
     AudioRecord recorder;
 
-    private int sampleRate = 44100 ; // 44100 for music
-    //private int sampleRate = 48000 ; // 44100 for music
+    //private int sampleRate = 16000 ; // 44100 for music
+    private int sampleRate = 48000 ; // 44100 for music
     private int channelConfig = AudioFormat.CHANNEL_CONFIGURATION_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+    //private int audioFormat = AudioFormat.ENCODING_PCM_FLOAT;
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
     private boolean status = true;
 
@@ -56,7 +57,7 @@ public class MainActivity extends Activity {
         imageStart.setOnClickListener (imageStartListener);
         imageStop.setOnClickListener (imageStopListener);
 
-        textBufferSize.setText("Buffer size [byte]: " + Integer.toString(minBufSize));
+        textBufferSize.setText("Buffer size [byte]: " + Integer.toString(minBufSize*2));
         textSamplingRate.setText("Sampling Rate [Hz]: " + Integer.toString(sampleRate));
 
 
@@ -85,6 +86,7 @@ public class MainActivity extends Activity {
                     DatagramSocket socket = new DatagramSocket();
                     Log.d("VS", "Socket Created");
                     final byte[] buffer = new byte[minBufSize];
+                    final byte[] buffer_fp = new byte[minBufSize*2];
                     Log.d("VS","Buffer created of size " + minBufSize);
                     DatagramPacket packet;
                     //final InetAddress destination = InetAddress.getByName("192.168.43.83");
@@ -99,8 +101,10 @@ public class MainActivity extends Activity {
                     while(status == true) {
                         //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
+                        //cast to float
+                        int_to_fp(buffer,buffer_fp);
                         //putting buffer in the packet
-                        packet = new DatagramPacket (buffer,buffer.length,destination,port);
+                        packet = new DatagramPacket (buffer_fp,buffer_fp.length,destination,port);
                         socket.send(packet);
 
                         AmplitudeCounter++;
@@ -109,7 +113,7 @@ public class MainActivity extends Activity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    textAmplitude.setText("Amplitude: " + Double.toString(getAmplitude(buffer)));
+                                  textAmplitude.setText("Amplitude: " + Double.toString(getAmplitude(buffer)));
                                 }
                             });
                         }
@@ -136,5 +140,35 @@ public class MainActivity extends Activity {
             }
         }
         return max;
+    }
+/*
+    private double getAmplitude(byte[] buffer) {
+        float max = 0;
+        for (int i = 0; i < buffer.length/4 - 1; i++)
+        {
+            float val=(float)(((buffer[4*i + 3] & 0xFF) << 24) | ((buffer[4*i + 2] & 0xFF) << 16) | ((buffer[4*i + 1] & 0xFF) << 8) | (buffer[4*i] & 0xFF));
+            if (Math.abs(val) > max)
+            {
+                max = Math.abs(val);
+            }
+        }
+        return max;
+    }
+    */
+    private void int_to_fp(byte[] buffer, byte[] buffer_fp) {
+        float number = 0;
+        for (int i = 0; i < buffer.length/2 - 1; i++)
+        {
+            short val=(short)(((buffer[2*i + 1] & 0xFF) << 8) | (buffer[2*i] & 0xFF));
+            float val_fp = val;
+            int intBits =  Float.floatToIntBits(val);
+            buffer_fp[4*i]     = (byte) (intBits);
+            buffer_fp[4*i + 1] = (byte) (intBits >> 8);
+            buffer_fp[4*i + 2] = (byte) (intBits >> 16);
+            buffer_fp[4*i + 3] = (byte) (intBits >> 24);
+  //          int intBits_reconstructed =
+   //                 buffer_fp[4*i+3] << 24 | (buffer_fp[4*i+2] & 0xFF) << 16 | (buffer_fp[4*i+1] & 0xFF) << 8 | (buffer_fp[4*i] & 0xFF);
+    //        float val_reconstructed = Float.intBitsToFloat(intBits_reconstructed);
+        }
     }
 }
