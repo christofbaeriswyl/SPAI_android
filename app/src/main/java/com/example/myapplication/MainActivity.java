@@ -6,6 +6,14 @@ package com.example.myapplication;
         import java.net.InetAddress;
         import java.net.UnknownHostException;
 
+        import java.io.DataOutputStream;
+        import java.io.ByteArrayOutputStream;
+        import java.io.FileOutputStream;
+        import java.io.File;
+        import java.io.OutputStream;
+        import java.io.BufferedOutputStream;
+        import java.io.FileNotFoundException;
+
         import android.app.Activity;
         import android.media.AudioFormat;
         import android.media.AudioRecord;
@@ -22,7 +30,7 @@ package com.example.myapplication;
 public class MainActivity extends Activity {
     private Button startButton,stopButton;
     private ImageButton imageStart, imageStop;
-    EditText editTextAddress, editTextPort;
+    EditText editTextAddress, editFileName, editTextPort;
     TextView textAmplitude, textSamplingRate, textBufferSize;
 
     public byte[] buffer;
@@ -40,6 +48,9 @@ public class MainActivity extends Activity {
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
     private boolean status = true;
 
+    ByteArrayOutputStream recData;
+    DataOutputStream dos;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -49,6 +60,7 @@ public class MainActivity extends Activity {
         imageStart = findViewById(R.id.imageButton);
         imageStop = findViewById(R.id.imageButton2);
         editTextAddress = (EditText) findViewById(R.id.address);
+        editFileName = (EditText) findViewById(R.id.filename);
         editTextPort = (EditText) findViewById(R.id.port);
         textAmplitude = findViewById(R.id.textAmplitude);
         textSamplingRate = findViewById(R.id.textSamplingRate);
@@ -58,7 +70,7 @@ public class MainActivity extends Activity {
         imageStop.setOnClickListener (imageStopListener);
 
         textBufferSize.setText("Buffer size [byte]: " + Integer.toString(minBufSize*2));
-        textSamplingRate.setText("Sampling Rate [Hz]: " + Integer.toString(sampleRate));
+        textSamplingRate.setText("Sampling rate [Hz]: " + Integer.toString(sampleRate));
 
 
     }
@@ -73,8 +85,40 @@ public class MainActivity extends Activity {
     private final OnClickListener imageStopListener = new View.OnClickListener() {
         public void onClick(View v) {
             status = false;
+            recorder.stop();
             recorder.release();
-            Log.d("VS","Recorder released");
+
+            try {
+                dos.flush();
+                dos.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            byte[] clipData = recData.toByteArray();
+            //os = new FileOutputStream(new File("/sdcard/onefile/assessor/OneFile_Audio_"+ newRecordingID+".wav"));
+            File file = new File("/mnt/sdcard/Documents/spai/" + editFileName.getText().toString());
+            if(file.exists())
+                file.delete();
+            file = new File("/mnt/sdcard/Documents/spai/" + editFileName.getText().toString());
+            OutputStream os;
+            try {
+                os = new FileOutputStream(file);
+
+                BufferedOutputStream bos = new BufferedOutputStream(os);
+                DataOutputStream outFile = new DataOutputStream(bos);
+
+                outFile.write(clipData);
+
+                outFile.flush();
+                outFile.close();
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }
     };
 
@@ -98,9 +142,22 @@ public class MainActivity extends Activity {
                     Log.d("VS", "Recorder initialized");
                     recorder.startRecording();
 
+                    recData = new ByteArrayOutputStream();
+                    dos = new DataOutputStream(recData);
+
                     while(status == true) {
                         //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
+
+                        //save
+                        for(int i = 0; i < minBufSize;i++) {
+                            try {
+                                dos.writeByte(buffer[i]);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
                         //cast to float
                         int_to_fp(buffer,buffer_fp);
                         //putting buffer in the packet
@@ -171,4 +228,41 @@ public class MainActivity extends Activity {
     //        float val_reconstructed = Float.intBitsToFloat(intBits_reconstructed);
         }
     }
+
+
+
+
+
+
+   /* public void writeToFile(String data)
+    {
+        String path =
+                Environment.getExternalStorageDirectory() + File.separator  + "SPAI";
+        // Create the folder.
+        File folder = new File(path);
+        folder.mkdirs();
+
+        // Create the file.
+        File file = new File(folder, "config.txt");
+
+        // Save your stream, don't forget to flush() it before closing it.
+
+        try
+        {
+            file.createNewFile();
+            FileOutputStream fOut = new FileOutputStream(file);
+            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+            myOutWriter.append(data);
+
+            myOutWriter.close();
+
+            fOut.flush();
+            fOut.close();
+        }
+        catch (IOException e)
+        {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
+    }*/
+
 }
